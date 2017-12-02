@@ -1,0 +1,129 @@
+---
+title: "OkCupid"
+author: "Project 5"
+date: "November 30, 2017"
+output: html_document
+---
+
+# Set-Up
+
+Install Packages:
+
+```{r}
+#install.packages("fmsb")
+
+library(fmsb)
+```
+
+Load Data:
+
+```{r}
+raw.data.speed.dating <- read.csv("../data/speed-dating-experiment/Speed Dating Data.csv")
+load("../data/profiles.RDA")
+```
+
+# Data Description
+
+The speed dating data set is...
+
+# Data Filter
+
+Relevant Data:
+
+```{r}
+#For looking at matches
+select.fields <- c("match", "gender", "int_corr", "samerace", "race")
+speed.dating <- raw.data.speed.dating[ , select.fields]
+
+
+#For looking at individuals
+select.fields2 <- c("iid", "gender", "race", "imprace", "imprelig", "age",
+                    "income", "goal", "date", "go_out", "career_c", "sports", 
+                    "dining", "museums", "art", "gaming", "clubbing", "reading", 
+                    "music", "yoga", "attr1_1", "sinc1_1", "intel1_1", "fun1_1",
+                    "amb1_1", "shar1_1")
+
+speed.dating.individual <- raw.data.speed.dating[ , select.fields2]
+speed.dating.individual <- unique(speed.dating.individual)
+
+rm(select.fields, select.fields2)
+```
+
+Calculate matching rates for individuals and merge with individuals dataset:
+
+```{r}
+matching.rates <- raw.data.speed.dating[, c("match", "iid")]
+matching.rates <- aggregate(match ~ iid, data = matching.rates, mean)
+
+speed.dating.individual <- merge(speed.dating.individual, matching.rates, by = "iid")
+```
+
+# Data Analysis
+
+Preliminary Analysis:
+
+```{r}
+#For every variable 1 = yes and 0 = no
+#For every rate, 10 is important and 0 is not important
+
+#Matching analysis-----------------------------------------------------------------------
+
+  #Matching percentage
+  round(sum(speed.dating$match == 1)/nrow(speed.dating) * 100, 2)
+  
+  #Box plot on matches by ratings of interest correlations
+  par(mfrow=c(1,2))
+  boxplot(int_corr ~ match, data = speed.dating, main = "Correlation on ratings of interests x Match")
+  boxplot(speed.dating$int_corr, main = "Correlation on ratings of interests")
+  
+  #Race
+  table(speed.dating$match, speed.dating$samerace)
+  length(unique(speed.dating$race))
+  table(speed.dating$race, speed.dating$match)
+
+#Individual analysis (taking repeated rows)-----------------------------------------------
+
+  #How important it is to be with someone of the same religion or race
+  par(mfrow=c(1,2))
+  boxplot(speed.dating.individual$imprace, main = "Same race/ethnic background  rating")
+  boxplot(speed.dating.individual$imprelig, main = "Same religion rating")
+  
+  #Matching rates
+  boxplot(speed.dating.individual$match, main = "Matching rates")
+  
+  #What people are looking for in his partner
+  par(mfrow=c(1,1))
+  radar <- apply(speed.dating.individual[,c("attr1_1","sinc1_1","intel1_1","fun1_1","amb1_1","shar1_1")], 2, mean, na.rm = T)
+  names(radar) <- c("Attractive", "Sincere", "Inteligent", "Fun", "Ambitious", "Shared Hobbies")
+  radar <- rbind( rep(30,6), rep(0,6), radar)
+  radarchart(as.data.frame(radar), title = "What people are looking for")
+  
+  par(mfrow=c(1,2))
+  radar <- apply(speed.dating.individual[speed.dating.individual$gender == 0, c("attr1_1", "sinc1_1", "intel1_1", "fun1_1", "amb1_1", "shar1_1")], 2, mean, na.rm = T)
+  
+  names(radar) <- c("Attractive", "Sincere", "Inteligent", "Fun", "Ambitious", "Shared Hobbies")
+  radar <- rbind( rep(30,6), rep(0,6), radar)
+  radarchart(as.data.frame(radar), title = "What women are looking for")
+  
+  radar <- apply(speed.dating.individual[speed.dating.individual$gender == 1, c("attr1_1", "sinc1_1", "intel1_1", "fun1_1", "amb1_1", "shar1_1")], 2, mean, na.rm = T)
+  
+  names(radar) <- c("Attractive", "Sincere", "Inteligent", "Fun", "Ambitious", "Shared Hobbies")
+  radar <- rbind( rep(30,6), rep(0,6), radar)
+  radarchart(as.data.frame(radar), title = "What men are looking for")
+```
+
+Is there any pattern among people with high match rates?
+
+Can we predict someone's matching rate?
+
+Can we cluster matches?
+
+Can we predict whether 2 people will match? 
+
+
+
+
+
+
+
+
