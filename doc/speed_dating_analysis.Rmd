@@ -12,6 +12,7 @@ Install Packages:
 ```{r}
 #install.packages("fmsb")
 
+library(MASS)
 library(fmsb)
 ```
 
@@ -32,7 +33,7 @@ Relevant Data:
 
 ```{r}
 #For looking at matches
-select.fields <- c("match", "gender", "int_corr", "samerace", "race")
+select.fields <- c("match", "int_corr", "samerace", "age")
 speed.dating <- raw.data.speed.dating[ , select.fields]
 
 
@@ -70,6 +71,9 @@ Preliminary Analysis:
 
   #Matching percentage
   round(sum(speed.dating$match == 1)/nrow(speed.dating) * 100, 2)
+
+  #Age
+  boxplot(speed.dating.individual$age)
   
   #Box plot on matches by ratings of interest correlations
   par(mfrow=c(1,2))
@@ -114,13 +118,67 @@ Preliminary Analysis:
 
 Is there any pattern among people with high match rates?
 
-Can we predict someone's matching rate?
+```{r}
+par(mfrow=c(1,1))
 
-Can we cluster matches?
+speed.dating.individual$match <- speed.dating.individual$match + 0.0001 
+
+#First Model----------------------------------------------------------------------
+
+#Fit linear model with all variable
+linear.model <- lm(match ~ ., data = speed.dating.individual[,-c(1,7)])
+
+#Interesting results
+summary(linear.model)
+
+sum(linear.model$residuals^2)
+
+#Second Model----------------------------------------------------------------------
+
+#Selecting variables
+linear.model <- lm(match ~ imprace + age + date + go_out + art + clubbing, 
+                   data = speed.dating.individual[,-c(1,7)])
+
+#Second model results
+anova(linear.model)
+
+summary(linear.model)
+
+sum(linear.model$residuals^2)
+
+#Third Model----------------------------------------------------------------------
+
+linear.model <- lm(match ~ 0 + age + go_out + art + clubbing, 
+                   data = speed.dating.individual[,-c(1,7)])
+
+#Second model results
+anova(linear.model)
+summary(linear.model)
+sum(linear.model$residuals^2)
+
+linear.stdres = rstandard(linear.model)
+qqnorm(linear.stdres, 
+     ylab="Standardized Residuals", 
+     xlab="Normal Scores", 
+     main="Old Faithful Eruptions") 
+qqline(linear.stdres)
+
+
+#Interesting: the date variable was important on the second model, but not on the third... are they highly correlated? or are people lying?
+
+calculate.correlation <- speed.dating.individual[ , c("date", "go_out")]
+calculate.correlation <- na.omit(calculate.correlation)
+
+cor(calculate.correlation)
+```
 
 Can we predict whether 2 people will match? 
 
+```{r}
+lda.model <- lda(match ~ ., data = speed.dating, CV = T)
 
+table(lda.model$class)
+```
 
 
 
