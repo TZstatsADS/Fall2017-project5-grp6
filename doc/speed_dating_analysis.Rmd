@@ -12,7 +12,9 @@ Install Packages:
 ```{r}
 #install.packages("fmsb")
 
+library(MASS)
 library(fmsb)
+library(ggplot2)
 ```
 
 Load Data:
@@ -32,7 +34,7 @@ Relevant Data:
 
 ```{r}
 #For looking at matches
-select.fields <- c("match", "gender", "int_corr", "samerace", "race")
+select.fields <- c("match", "int_corr", "samerace", "age")
 speed.dating <- raw.data.speed.dating[ , select.fields]
 
 
@@ -60,7 +62,7 @@ speed.dating.individual <- merge(speed.dating.individual, matching.rates, by = "
 
 # Data Analysis
 
-Preliminary Analysis:
+##Preliminary Analysis:
 
 ```{r}
 #For every variable 1 = yes and 0 = no
@@ -68,49 +70,177 @@ Preliminary Analysis:
 
 #Matching analysis-----------------------------------------------------------------------
 
-  #Matching percentage
-  round(sum(speed.dating$match == 1)/nrow(speed.dating) * 100, 2)
-  
-  #Box plot on matches by ratings of interest correlations
-  par(mfrow=c(1,2))
-  boxplot(int_corr ~ match, data = speed.dating, main = "Correlation on ratings of interests x Match")
-  boxplot(speed.dating$int_corr, main = "Correlation on ratings of interests")
-  
-  #Race
-  table(speed.dating$match, speed.dating$samerace)
-  length(unique(speed.dating$race))
-  table(speed.dating$race, speed.dating$match)
+#Matching percentage
+round(sum(speed.dating$match == 1)/nrow(speed.dating) * 100, 2)
+
+#Age
+boxplot(speed.dating.individual$age)
+
+#Box plot on matches by ratings of interest correlations
+par(mfrow=c(1,2))
+boxplot(int_corr ~ match, data = speed.dating, main = "Correlation on ratings of interests x Match")
+boxplot(speed.dating$int_corr, main = "Correlation on ratings of interests")
+
+#Race
+table(speed.dating$match, speed.dating$samerace)
+length(unique(speed.dating$race))
+table(speed.dating$race, speed.dating$match)
 
 #Individual analysis (taking repeated rows)-----------------------------------------------
 
-  #How important it is to be with someone of the same religion or race
-  par(mfrow=c(1,2))
-  boxplot(speed.dating.individual$imprace, main = "Same race/ethnic background  rating")
-  boxplot(speed.dating.individual$imprelig, main = "Same religion rating")
-  
-  #Matching rates
-  boxplot(speed.dating.individual$match, main = "Matching rates")
-  
-  #What people are looking for in his partner
-  par(mfrow=c(1,1))
-  radar <- apply(speed.dating.individual[,c("attr1_1","sinc1_1","intel1_1","fun1_1","amb1_1","shar1_1")], 2, mean, na.rm = T)
-  names(radar) <- c("Attractive", "Sincere", "Inteligent", "Fun", "Ambitious", "Shared Hobbies")
-  radar <- rbind( rep(30,6), rep(0,6), radar)
-  radarchart(as.data.frame(radar), title = "What people are looking for")
-  
-  par(mfrow=c(1,2))
-  radar <- apply(speed.dating.individual[speed.dating.individual$gender == 0, c("attr1_1", "sinc1_1", "intel1_1", "fun1_1", "amb1_1", "shar1_1")], 2, mean, na.rm = T)
-  
-  names(radar) <- c("Attractive", "Sincere", "Inteligent", "Fun", "Ambitious", "Shared Hobbies")
-  radar <- rbind( rep(30,6), rep(0,6), radar)
-  radarchart(as.data.frame(radar), title = "What women are looking for")
-  
-  radar <- apply(speed.dating.individual[speed.dating.individual$gender == 1, c("attr1_1", "sinc1_1", "intel1_1", "fun1_1", "amb1_1", "shar1_1")], 2, mean, na.rm = T)
-  
-  names(radar) <- c("Attractive", "Sincere", "Inteligent", "Fun", "Ambitious", "Shared Hobbies")
-  radar <- rbind( rep(30,6), rep(0,6), radar)
-  radarchart(as.data.frame(radar), title = "What men are looking for")
 ```
+
+### importance of religion and race/ethnic background
+
+```{r}
+#How important it is to be with someone of the same religion or race
+par(mfrow=c(1,2))
+boxplot(speed.dating.individual$imprace, main = "Same race/ethnic background  rating")
+boxplot(speed.dating.individual$imprelig, main = "Same religion rating")
+
+##
+## Apparently, neither aspects are so important
+
+
+#Matching rates
+boxplot(speed.dating.individual$match, main = "Matching rates")
+
+## 
+## OBS: didn't get so well this plot. (Joaquim)
+```
+
+### What people are looking for in their partner
+
+```{r}
+#What people are looking for in his partner
+par(mfrow=c(1,1))
+radar <- apply(speed.dating.individual[,c("attr1_1","sinc1_1","intel1_1","fun1_1","amb1_1","shar1_1")], 2, mean, na.rm = T)
+names(radar) <- c("Attractive", "Sincere", "Inteligent", "Fun", "Ambitious", "Shared Hobbies")
+radar <- rbind( rep(30,6), rep(0,6), radar)
+radarchart(as.data.frame(radar), title = "What people are looking for")
+
+par(mfrow=c(1,2))
+radar <- apply(speed.dating.individual[speed.dating.individual$gender == 0, c("attr1_1", "sinc1_1", "intel1_1", "fun1_1", "amb1_1", "shar1_1")], 2, mean, na.rm = T)
+
+names(radar) <- c("Attractive", "Sincere", "Inteligent", "Fun", "Ambitious", "Shared Hobbies")
+radar <- rbind( rep(30,6), rep(0,6), radar)
+radarchart(as.data.frame(radar), title = "What women are looking for")
+
+radar <- apply(speed.dating.individual[speed.dating.individual$gender == 1, c("attr1_1", "sinc1_1", "intel1_1", "fun1_1", "amb1_1", "shar1_1")], 2, mean, na.rm = T)
+
+names(radar) <- c("Attractive", "Sincere", "Inteligent", "Fun", "Ambitious", "Shared Hobbies")
+radar <- rbind( rep(30,6), rep(0,6), radar)
+radarchart(as.data.frame(radar), title = "What men are looking for")
+
+##
+## As we can see, men seem to care more if women are attractive or not, when it comes to looking for a partner. Women tend to value more intelligence in their partners.
+```
+
+### Matches statistics
+```{r}
+plot(density(speed.dating.individual$match), main = "matches density")
+
+# get quantiles, mean and std dev
+quantile(speed.dating.individual$match, c(0.1,0.25,0.5,0.75, .9))
+mean(speed.dating.individual$match)
+sd(speed.dating.individual$match)
+```
+
+### Is there any pattern among people with high match rates?
+
+```{r}
+par(mfrow=c(1,1))
+
+speed.dating.individual$match <- speed.dating.individual$match + 0.0001 
+
+#First Model----------------------------------------------------------------------
+
+#Fit linear model with all variable
+linear.model <- lm(match ~ ., data = speed.dating.individual[,-c(1,7)])
+
+#Interesting results
+summary(linear.model)
+
+sum(linear.model$residuals^2)
+
+#Second Model----------------------------------------------------------------------
+
+#Selecting variables
+linear.model <- lm(match ~ imprace + age + date + go_out + art + clubbing, 
+                   data = speed.dating.individual[,-c(1,7)])
+
+#Second model results
+anova(linear.model)
+
+summary(linear.model)
+
+sum(linear.model$residuals^2)
+
+#Third Model----------------------------------------------------------------------
+
+linear.model <- lm(match ~ 0 + age + go_out + art + clubbing, 
+                   data = speed.dating.individual[,-c(1,7)])
+
+#Second model results
+anova(linear.model)
+summary(linear.model)
+sum(linear.model$residuals^2)
+
+linear.stdres = rstandard(linear.model)
+qqnorm(linear.stdres, 
+     ylab="Standardized Residuals", 
+     xlab="Normal Scores", 
+     main="Old Faithful Eruptions") 
+qqline(linear.stdres)
+
+
+#Interesting: the date variable was important on the second model, but not on the third... are they highly correlated? or are people lying?
+
+calculate.correlation <- speed.dating.individual[ , c("date", "go_out")]
+calculate.correlation <- na.omit(calculate.correlation)
+
+cor(calculate.correlation)
+```
+
+### Can we predict whether 2 people will match? 
+
+```{r}
+lda.model <- lda(match ~ ., data = speed.dating, CV = T)
+
+table(lda.model$class)
+```
+
+
+### income and matches
+Is there any correlation between a person's income and his percentage of matches?
+```{r}
+
+plot( x = speed.dating.individual$match, y = speed.dating.individual$income )
+
+cor( x = speed.dating.individual$match, y = as.numeric(speed.dating.individual$income) )
+
+```
+Apparently, it doesn't appear to exist a relation between these two factors.
+
+
+### who usually goes out more on dates? men or women?
+```{r}
+df_n_dates <- speed.dating.individual[,c("gender","date")]
+df_n_dates[ which( df_n_dates$gender == 0 ), ]$gender <- "female"
+df_n_dates[ which( df_n_dates$gender == 1 ), ]$gender <- "male"
+
+# plot histograms
+dat <- data.frame(xx = c(runif(100,20,50),runif(100,40,80),runif(100,0,30)),yy = rep(letters[1:3],each = 100))
+
+ggplot(df_n_dates,aes(x = date)) + 
+    geom_density(data=subset(df_n_dates,gender == 'female'),fill = "red", alpha = 0.2) +
+    geom_density(data=subset(df_n_dates,gender == 'male'),fill = "blue", alpha = 0.2)
+
+mean( df_n_dates[ which( df_n_dates$gender == 'female' & !is.na(df_n_dates$date) ), ]$date)
+mean( df_n_dates[ which( df_n_dates$gender == 'male' & !is.na(df_n_dates$date) ), ]$date)
+```
+As we can see, apparently women go more often on dates than men.
+
 
 Is there any pattern among people with high match rates?
 
@@ -119,11 +249,4 @@ Can we predict someone's matching rate?
 Can we cluster matches?
 
 Can we predict whether 2 people will match? 
-
-
-
-
-
-
-
 
