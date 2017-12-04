@@ -1,0 +1,92 @@
+---
+title: "Untitled"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(dplyr)
+library(downloader)
+library(okcupiddata)
+library(cluster)
+data(profiles)
+
+```
+
+
+```{r}
+#head(profiles)
+#summary(profiles)
+
+# Data processing
+profiles_new <- profiles %>% na.omit()
+quant_profiles <- select(profiles_new, age, height, income, sex)
+
+quant_profiles_male0 <- filter(quant_profiles, sex =="m")
+quant_profiles_male <- select(quant_profiles_male0, age, height, income)
+
+quant_profiles_female0 <- filter(quant_profiles, sex =="f")
+quant_profiles_female <- select(quant_profiles_female0, age, height, income)
+
+## BEGIN Optimize the number of clusters
+# How what value should the number of clusters take?
+kmeans_wssplot <- function(input, num_clusters, seed=15){
+  wss <- (nrow(input)-1)*sum(apply(input,2,var))
+  for (i in 2:num_clusters){
+    set.seed(seed)
+    wss[i] <- sum(kmeans(input, centers=i)$withinss)}
+  plot(1:num_clusters, wss, type="b", xlab="Number of Clusters",
+       ylab="Within Groups Sum of Squares")}
+
+kmeans_wssplot(quant_profiles_male, num_clusters=6)
+kmeans_wssplot(quant_profiles_female, num_clusters=6)
+
+#
+library("factoextra")
+fviz_nbclust(quant_profiles_male, kmeans, method = "gap_stat") # Gap_statistics: larger the better; compares the total intra-cluster variation for different values of k with their expected values under null;further away from random distribution; Choose the smallest value of k such that the gap stat is within one stan
+
+
+##
+## END Optimize the number of clusters
+
+
+```
+![Choose the optimal k according to the above](gap_stat.png)
+
+# Visualize the clustering
+
+```{r}
+# It seems that 4 or 5 clusters are optimal
+# Fit K-Means with number of clusters on male and female respectively
+quant_male_k_means_fit3 <- kmeans(quant_profiles_male, 3)
+quant_male_k_means_fit4 <- kmeans(quant_profiles_male, 4)
+quant_female_k_means_fit4 <- kmeans(quant_profiles_female, 4)
+
+# Visualize the clustering after apply PCA
+clusplot(quant_profiles_male, quant_male_k_means_fit3$cluster, main='2D representation of the Cluster solution',
+         color=TRUE, shade=TRUE,
+         labels=2, lines=0)
+
+clusplot(quant_profiles_male, quant_male_k_means_fit4$cluster, main='2D representation of the Cluster solution',
+         color=TRUE, shade=TRUE,
+         labels=2, lines=0)
+```
+
+# Agglomerative Hierarchical Cluster: starts with each individual observation as a cluster; then the two closest points as a new cluster
+```{r}
+
+m_medians = apply(quant_profiles_male,2,median)
+m_mads = apply(quant_profiles_male,2,mad) #median absolute deviation; the median of the absolute deviations from the median
+quant_profiles_male_hier = scale(quant_profiles_male,center=m_medians,scale=m_mads)
+quant_m_dist = dist(quant_profiles_male_hier)
+quant_m_hclust = hclust(quant_m_dist,method="ward.D") #Ward’s minimum variance criterion minimizes the total within-cluster variance
+plot(quant_m_hclust,labels=quant_profiles_male0$smokes, main='Default from hclust')
+rect.hclust(quant_m_hclust, k=4, border="red") 
+
+m_groups_4 = cutree(quant_m_hclust,4) #showing cluster membership for 3 cluster solution
+table(m_groups_4)
+
+#table(wine[,1],groups) #Confusion matrix
+```
+
