@@ -34,7 +34,7 @@ Relevant Data:
 
 ```{r}
 #For looking at matches
-select.fields <- c("match", "int_corr", "samerace", "age")
+select.fields <- c("match", "int_corr", "samerace", "age", "race")
 speed.dating <- raw.data.speed.dating[ , select.fields]
 
 
@@ -170,8 +170,6 @@ linear.model <- lm(match ~ imprace + age + date + go_out + art + clubbing,
                    data = speed.dating.individual[,-c(1,7)])
 
 #Second model results
-anova(linear.model)
-
 summary(linear.model)
 
 sum(linear.model$residuals^2)
@@ -182,7 +180,6 @@ linear.model <- lm(match ~ 0 + age + go_out + art + clubbing,
                    data = speed.dating.individual[,-c(1,7)])
 
 #Second model results
-anova(linear.model)
 summary(linear.model)
 sum(linear.model$residuals^2)
 
