@@ -1,0 +1,18 @@
+---
+title: "Project 5 - insert project title"
+author: " insert group members"
+date: "12/4/2017"
+output: html_document
+---
+
+## Introduction
+
+## Explain data sets
+
+## EDA for each
+
+## Clustering methods
+
+## Other analyses
+
+## Conclusion (with business pitch)
