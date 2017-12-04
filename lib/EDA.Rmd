@@ -1,0 +1,199 @@
+---
+title: "EDA on both datasets"
+author: 'Xinhu Wang (UNI: xw2439)'
+date: "11/30/2017"
+output: html_document
+---
+
+First dataset: okcupid profiles
+# Data overview and cleaning
+```{r}
+#install.packages("okcupiddata")
+library(okcupiddata)
+library(ggplot2)
+library(RColorBrewer)
+library(dplyr)
+library(scales)
+library(reshape)
+library(plotly)
+#save(profiles, file = '../data/profiles.RDA')
+#load("../data/profiles.RDA")
+
+# take a look at the distribution of height, which is converted into inches
+# 1 foot = 12 inches
+summary(profiles$height)
+boxplot(profiles$height)
+# Remove the "unreasonable" values (outliers)
+outliers.h <- boxplot.stats(profiles$height)$out
+profiles.sub1 <- filter(profiles, !height %in% outliers.h)
+
+# Remove extreme and NA ages
+profiles.sub2 <- filter(profiles.sub1, !is.na(age), !is.na(sex), age > 18, age < 80)
+```
+
+Look at the sex and age distributions
+```{r}
+sex_dist <- ggplot(profiles.sub2, aes(x= sex, fill = sex)) + 
+    geom_bar(position = "dodge", stat = "count")  +
+    ggtitle("sex distribution") +
+    ylab("count") + 
+    xlab("age")
+print(sex_dist)
+
+sex.age <- group_by(profiles.sub2[, c("sex", "age")], sex, age) %>% summarize(n_age = n())
+
+age_dist <- ggplot(sex.age, aes(x= age, y = n_age, color = sex)) + 
+    geom_line(size = 1.5)  +
+    ggtitle("age distribution by sex") +
+    ylab("count") + 
+    xlab("age") +
+    theme(legend.position="right")
+print(age_dist)
+```
+
+Income difference by sex
+```{r}
+profiles.sub2$income %>% unique %>% sort
+# remove na value in income
+profiles.sub3 <- filter(profiles.sub2, !is.na(income))
+
+p1 <- ggplot(profiles.sub3, aes(x = sex)) +
+  geom_bar(aes(y = ..count../sum(..count..), fill = as.factor(income))) + 
+  theme(legend.position = "right") +
+  ylab("Percent") + ggtitle("Income distribution by sex")
+print(ggplotly(p1))
+```
+
+Religions difference
+```{r}
+sample(unique(profiles$religion), 4)
+profiles.sub4 <- profiles.sub3 %>% mutate(religious_affil = gsub(" [A-z ]*", "", religion))
+profiles.sub4 <- profiles.sub4 %>% filter(religious_affil != "other")
+p2 <- ggplot(profiles.sub4, aes(x = sex)) +
+  geom_bar(aes(y = ..count../sum(..count..), fill = religious_affil)) + 
+  theme(legend.position = "right") +
+  ylab("Percent") + ggtitle("Religion distribution by sex")
+print(ggplotly(p2))
+```
+
+Drinking habit
+```{r}
+# remove NA
+profiles.sub5 <- filter(profiles.sub4, !is.na(drinks))
+p3 <- ggplot(profiles.sub5, aes(x = sex)) +
+  geom_bar(aes(y = ..count../sum(..count..), fill = drinks)) + 
+  theme(legend.position = "right") +
+  ylab("Percent") + ggtitle("Drinks distribution by sex")
+print(ggplotly(p3))
+```
+
+
+Second dataset: Speed date data from Kaggle.com
+```{r}
+#install.packages("fmsb")
+library(fmsb)
+speed <- read.csv("~/Desktop/ADS/fall2017-project5-proj5-group6/data/speed-dating-experiment/Speed Dating Data.csv", na.strings = c("NA", ""), stringsAsFactors = F)
+speed.sub <- speed %>% select(-id, -idg, -condtn, -round, -position, -positin1, -order, -partner, -undergra)
+#change "income", "tuition" and "mn_sat" type as numerical
+speed.sub$income  <- as.numeric(gsub(",", "", speed.sub$income))
+speed.sub$tuition <- as.numeric(gsub(",", "", speed.sub$tuition))
+speed.sub$mn_sat  <- as.numeric(gsub(",", "", speed.sub$mn_sat))
+```
+
+field and career distribution by sex
+```{r}
+# Create study field codes
+fields.cd <- c(
+  "Law",
+  "Math",
+  "Social Science, Psychologist" ,
+  "Medical Science, Pharmaceuticals, and Bio Tech",
+  "Engineering",
+  "English/Creative Writing/ Journalism",
+  "History/Religion/Philosophy",
+  "Business/Econ/Finance",
+  "Education, Academia",
+  "Biological Sciences/Chemistry/Physics",
+  "Social Work" ,
+  "Undergrad/undecided" ,
+  "Political Science/International Affairs" ,
+  "Film",
+  "Fine Arts/Arts Administration",
+  "Languages",
+  "Architecture",
+  "Other"
+)
+
+# Create career codes
+career.cd <- c(
+  "Lawyer",
+  "Academic/Research", 
+  "Psychologist", 
+  "Doctor/Medicine",
+  "Engineer", 
+  "Creative Arts/Entertainment",
+  "BankingBusiness/CEO/Admin",
+  "Real Estate",
+  "International/Humanitarian Affairs",
+  "Undecided" ,
+  "Social Work",
+  "Speech Pathology",
+  "Politics",
+  "Pro sports/Athletics",
+  "Other",
+  "Journalism",
+  "Architecture"
+)
+
+# Find number of men/women on each study field
+fields <- speed.sub[!is.na(speed.sub$field_cd),] %>%
+  group_by(gender, field_cd) %>%
+  summarise(my.n = n())
+
+# Find number of men/women on each career
+careers <- speed.sub[!is.na(speed.sub$career_c),] %>%
+  group_by(gender, career_c) %>%
+  summarise(my.n = n())
+
+# Plot study fields repartition
+p4 <- ggplot(fields, aes(x = field_cd, y = my.n, fill = as.factor(gender))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_discrete(name = "Gender") +
+  xlab("Field") + ylab("Count") + ggtitle("Fields Distribution by sex") +
+  scale_x_continuous(labels = fields.cd, breaks = 1:18) +
+  coord_flip()
+print(p4)
+
+p5 <- ggplot(careers, aes(x = career_c, y = my.n, fill = as.factor(gender))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_discrete(name = "Gender") +
+  xlab("Career") + ylab("Count") + ggtitle("Careers Distribution by sex") +
+  scale_x_continuous(labels = career.cd, breaks = 1:17) +
+  coord_flip()
+print(p5)
+```
+
+age difference & no. of match
+```{r}
+# Group df by age and age_0
+age.dist <- speed.sub %>%
+  group_by(age, age_o) %>%
+  summarise(n.people = n(), n.matches = sum(match)) %>%
+  filter(!is.na(age) & !is.na(age_o))
+
+# Filter with age difference > 5 years, and with more than 5 matches
+age.diff <- age.dist %>%
+  filter(age - age_o >= 0) %>%
+  mutate(n.years = age - age_o) %>%
+  group_by(n.years) %>%
+  summarise(n.matches = sum(n.matches)) %>%
+  arrange(n.years)
+
+p6 <- ggplot(age.diff[age.diff$n.years < 20,], aes(x = n.years, y = n.matches)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  xlab("Number of years of age difference") + 
+  ylab("Number of matches") + 
+  ggtitle("Distribution of Number of matches (by age difference)")
+print(p6)
+```
+
