@@ -176,7 +176,7 @@ print(p5)
 age difference & no. of match
 ```{r}
 # Group df by age and age_0
-age.dist <-  speed.sub %>%
+age.dist <- speed.sub %>%
   group_by(age, age_o) %>%
   summarise(n.people = n(), n.matches = sum(match)) %>%
   filter(!is.na(age) & !is.na(age_o))
@@ -192,7 +192,8 @@ age.diff <- age.dist %>%
 p6 <- ggplot(age.diff[age.diff$n.years < 20,], aes(x = n.years, y = n.matches)) +
   geom_bar(stat = "identity", position = "dodge") +
   xlab("Number of years of age difference") + 
-  ylab("Number of matches")
+  ylab("Number of matches") + 
+  ggtitle("Distribution of Number of matches (by age difference)")
 print(p6)
 ```
 

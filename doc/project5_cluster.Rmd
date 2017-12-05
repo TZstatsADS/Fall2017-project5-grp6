@@ -1,0 +1,353 @@
+---
+title: "ADS Project5 Decode Online Dating"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+
+```{r,echo = FALSE, include=FALSE}
+library(okcupiddata) # data
+library(clustMixType) #for cluster with mixture data type  
+library(dplyr) # for data cleaning
+library(cluster) # for gower similarity and pam
+library(Rtsne) # for t-SNE plot
+library(ggplot2) # for visualization
+data(profiles)
+```
+###In this project, we conduct extensive exploratory analysis using various visualization tools, clustering, and regression model on datasets obtained from Kaggle and OkCupid, one of the most widely used dating apps to derive meaningful insights into online dating. We hope to help everyone in the fray to increase their opportunity of finding the one. 
+
+####First of all, we will explore the two data sets and get a general sense of the dating scene.
+```{r}
+
+```
+####Next, we explore the different categories within the online dating population with K-Means Clustering, so that people can identify themselves with a category and understand what kind of competition they are facing. 
+
+####We performed K-Means on three of the continuous variables: age, height, and income, and did it on male and female respectively. 
+
+
+```{r, echo=FALSE}
+library(dplyr)
+library(downloader)
+library(okcupiddata)
+library(cluster)
+data(profiles)
+
+```
+
+
+```{r, echo=FALSE}
+#head(profiles)
+#summary(profiles)
+
+# Data processing
+profiles_new <- profiles %>% na.omit()
+quant_profiles <- select(profiles_new, age, height, income, sex)
+
+quant_profiles_male0 <- filter(quant_profiles, sex =="m")
+quant_profiles_male <- select(quant_profiles_male0, age, height, income)
+
+quant_profiles_female0 <- filter(quant_profiles, sex =="f")
+quant_profiles_female <- select(quant_profiles_female0, age, height, income)
+
+## BEGIN Optimize the number of clusters
+# How what value should the number of clusters take?
+kmeans_wssplot <- function(input, num_clusters, seed=15, label){
+  wss <- (nrow(input)-1)*sum(apply(input,2,var))
+  for (i in 2:num_clusters){
+    set.seed(seed)
+    wss[i] <- sum(kmeans(input, centers=i)$withinss)}
+  plot(1:num_clusters, wss, type="b", xlab=paste("Number of Clusters for", label),
+       ylab="Within Groups Sum of Squares")
+  text(1:num_clusters, wss,label=wss,col='blue')
+}
+```
+
+###Optimize the Number of Clusters for K-Means
+
+#### The plot trails off after 3, suggesting 3 or 4 might be a good choice for K.
+```{r, echo=FALSE}
+
+
+kmeans_wssplot(quant_profiles_male, num_clusters=6, label = "Male")
+kmeans_wssplot(quant_profiles_female, num_clusters=6, label = "Female")
+#
+kmeans_wssplot2 <- function(input, num_clusters, seed=15, label){
+  wss <- (nrow(input)-1)*sum(apply(input,2,var))
+  for (i in 2:num_clusters){
+    set.seed(seed)
+    wss[i] <- sum(kmeans(input, centers=i)$withinss)}
+  plot(2:num_clusters, wss[-1], type="b", xlab=paste("Number of Clusters for", label),
+       ylab="Within Groups Sum of Squares")
+  text(2:num_clusters, c(wss[-1]+1e11),label=wss,col='blue')
+  }
+
+
+kmeans_wssplot2(quant_profiles_male, num_clusters=8, label = "Male")
+kmeans_wssplot2(quant_profiles_female, num_clusters=8, label = "Female")
+
+#
+```
+#### Gap staistics: A more rigorous method to help us find the number of clusters.
+#### Since the larger the gap statistics the better and we should choose the smallest value of K such that the gap stat is within one standard deviation of the next gap stat, the output plot suggests K = 5. 
+```{r, echo=FALSE}
+
+
+library("factoextra")
+fviz_nbclust(quant_profiles_male, kmeans, method = "gap_stat") # Gap_statistics: larger the better; compares the total intra-cluster variation for different values of k with their expected values under null;further away from random distribution; Choose the smallest value of k such that the gap stat is within one standard deviation of the next gap stat
+
+fviz_nbclust(quant_profiles_female, kmeans, method = "gap_stat")
+##
+## END Optimize the number of clusters
+
+
+```
+
+![Choose the optimal k according to the above](gap_stat.png)
+
+
+### Visualize the clustering
+We then visualize the clustering solution and find that there seems to be two distinct groups when visualizing with a 2-dimension representation. This result is repeated when K = 3,4,5. 
+```{r,echo = FALSE}
+# It seems that 4 or 5 clusters are optimal
+# Fit K-Means with number of clusters on male and female respectively
+quant_male_k_means_fit2 <- kmeans(quant_profiles_male, 2)
+quant_male_k_means_fit3 <- kmeans(quant_profiles_male, 3)
+quant_male_k_means_fit4 <- kmeans(quant_profiles_male, 4)
+quant_female_k_means_fit3 <- kmeans(quant_profiles_female, 3)
+quant_female_k_means_fit2 <- kmeans(quant_profiles_female, 2)
+
+# Visualize the clustering after apply PCA
+clusplot(quant_profiles_male, quant_male_k_means_fit3$cluster, main='Male K-Means Clustering',
+         color=TRUE, shade=TRUE,
+         labels=2, lines=0)
+
+clusplot(quant_profiles_female, quant_female_k_means_fit3$cluster, main='Female K-Means Clustering',
+         color=TRUE, shade=TRUE,
+         labels=2, lines=0)
+```
+
+#### Cluster Sizes
+#### It seems that for both male and female, there are three distinct groups and one of them stand out. What are the characteristics of this outstanding group? We further investigate using within cluster statistics. 
+```{r}
+
+quant_male_k_means_fit3$size
+quant_male_k_means_fit2$size
+
+quant_female_k_means_fit3$size
+quant_female_k_means_fit2$size
+```
+
+#### Mean for each variable within each cluster for male and femal respectively
+```{r}
+aggregate(quant_profiles_male, by = list(cluster=quant_male_k_means_fit3$cluster), mean)
+
+aggregate(quant_profiles_female, by = list(cluster=quant_female_k_means_fit3$cluster), mean)
+
+```
+
+#### Median for each variable within each cluster for male and femal respectively
+```{r}
+aggregate(quant_profiles_male, by = list(cluster=quant_male_k_means_fit3$cluster), median)
+
+aggregate(quant_profiles_female, by = list(cluster=quant_female_k_means_fit3$cluster), median)
+```
+
+### Agglomerative Hierarchical Clustering: starts with each individual observation as a cluster; then the two closest points as a new cluster
+```{r, echo=FALSE}
+
+m_medians = apply(quant_profiles_male,2,median)
+m_mads = apply(quant_profiles_male,2,mad) #median absolute deviation; the median of the absolute deviations from the median
+quant_profiles_male_hier = scale(quant_profiles_male,center=m_medians,scale=m_mads)
+quant_m_dist = dist(quant_profiles_male_hier)
+quant_m_hclust = hclust(quant_m_dist,method="ward.D") #Ward’s minimum variance criterion minimizes the total within-cluster variance
+plot(quant_m_hclust,labels=quant_profiles_male0$smokes, main='Default from hclust')
+rect.hclust(quant_m_hclust, k=4, border="red") 
+
+m_groups_4 = cutree(quant_m_hclust,4) #showing cluster membership for 3 cluster solution
+table(m_groups_4)
+
+#table(wine[,1],groups) #Confusion matrix
+```
+
+........................
+
+With a broad understanding of clusters and dataset, we continued to add more categorical variables into clustering. Here, we used drinks habits, diet habits, drugs habits, and body type for people  
+
+Since we had both numeric and categorical variables in the model, we could not use k-means as clustering method. Instead, we used two-step clustering. 
+
+Two-step clustering includes following major steps:
+
+1. Calculating distance 
+
+2. Choosing a clustering algorithm
+
+3. Selecting the number of cluster
+
+4. Cluster and explain the cluster  
+
+
+
+```{r,echo = FALSE, include=FALSE}
+set.seed(101) # for reproduce 
+profiles_new <- profiles %>% na.omit()
+df<-select(profiles_new,sex,age, height, income,drinks,diet,drugs,body_type)
+cols <- c("drinks","diet","drugs","body_type")
+df[cols] <- lapply(df[cols], factor)
+sapply(df, class)
+```
+
+```{r,echo = FALSE, include=FALSE}
+df_male <- filter(df, sex =="m")
+df_female <- filter(df, sex =="f")
+```
+
+
+In the first step, we want to calculate distance to get measurement of similarity between observations. Since the data type is mixed data types, we could not work with Euclidean distance. Here we chose Gower distance.
+
+Gower distance is a distance metric that scales the data between 0 and 1. And then, the distance matrix is calculated based on weights (e.g. average). The metrics used for each data type are described below:
+
+1. quantitative: range-normalized Manhattan distance
+
+2. categorical: variables of k categories are first converted into k binary columns and then the Dice coeffcient is used
+
+We calculated Gower distance with daisy function in R and checked out what is the most similar and dissimilar pair to do the sanity check. 
+
+Here is the most similar pair for female users:
+```{r,echo = FALSE}
+####### two-step clustering-----------------------------
+### female clustering 
+# Distance Calculation 
+gower_dist <- daisy(df_female[,-1],metric = "gower",type = list(logratio = 3))
+# summary(gower_dist)
+gower_mat <- as.matrix(gower_dist)
+
+# Output most similar pair
+df_female[which(gower_mat == min(gower_mat[gower_mat != min(gower_mat)]),
+                arr.ind = TRUE)[1, ], ]
+```
+
+Here is the most dissimilar pair for female users:
+```{r}
+# Output most dissimilar pair
+df_female[which(gower_mat == max(gower_mat[gower_mat != max(gower_mat)]),
+                arr.ind = TRUE)[1, ], ]
+```
+
+
+In the second step, we selected partitioning around medics (PAM).  PAM is similar with k-means, but the cluster center for PAM are restricted as the observations and could handle a custom distance matrix ( i.e. Gower distance). The detail pf the algorithm is following:
+
+1. Choose k random entities to become the medoids
+
+2. Assign every entity to its closest medoid (using our custom distance matrix in this case)
+
+3. For each cluster, identify the observation that would yield the lowest average distance if it were to be re-assigned as the medoid. If so, make this observation the new medoid.
+
+4. If at least one medoid has changed, return to step 2. Otherwise, end the algorithm.
+
+
+After choosing PAM as clustering method, we used  silhouette width, an internal validation metric which is an aggregated measure of how similar an observation is to its own cluster compared its closest neighboring cluster. The width ranges from -1 to 1 and the higher the better. 
+
+Below is the result for female users with different numbers of clusters. The figure suggests that number of cluster is 3. 
+```{r,echo = FALSE}
+# Calculate silhouette width for many k using PAM
+sil_width <- c(NA)
+
+for(i in 2:10){
+  pam_fit <- pam(gower_dist,diss = TRUE,k = i)
+  sil_width[i] <- pam_fit$silinfo$avg.width
+}
+
+# Plot sihouette width (higher is better)
+plot(1:10, sil_width,xlab = "Number of clusters",ylab = "Silhouette Width")
+lines(1:10, sil_width)
+```
+
+With number of cluster =3, we calculated cluster and interpretate cluster results via summary and visualization. 
+
+Below is variable summary for each cluster of female users. We could conclude that female users in the cluster 1 tend to have curvy body type and never take drugs. Female users in the cluster 2 tend to little bit aged and have average body type, higer income and never take drugs. Female users in the cluster 3 somttime take drugs.
+```{r,echo = FALSE}
+# Cluster Interpretation
+pam_fit <- pam(gower_dist, diss = TRUE, k = 3)
+pam_results <- df_female[,-1] %>%
+  mutate(cluster = pam_fit$clustering) %>%
+  group_by(cluster) %>%
+  do(the_summary = summary(.))
+
+pam_results$the_summary
+```
+
+
+Based on the results analysis, it seems like cluster 1 and 2 are more simliar and cluster 3 is more seperate from other two groups. Will the visualization result follow the analysis? Here, we used t-distributed stochastic neighborhood embedding, or t-SNE, to visualize many variables in a lower dimensional space.This method is a dimension reduction technique that tries to preserve local structure so as to make clusters visible in a 2D or 3D visualization.
+
+
+The below is the visualization result. The visualization follows the analysis. We could seer the cluster 3 is little special from other two clusters. 
+```{r,echo = FALSE}
+# Visualization
+tsne_obj <- Rtsne(gower_dist, is_distance = TRUE)
+
+tsne_data <- tsne_obj$Y %>%
+  data.frame() %>%
+  setNames(c("X", "Y")) %>%
+  mutate(cluster = factor(pam_fit$clustering))
+
+ggplot(aes(x = X, y = Y), data = tsne_data) +
+  geom_point(aes(color = cluster))
+```
+
+
+We went through the cluster for female users above. We also used the same method to cluster male users with 3 clusters. 
+```{r,echo = FALSE, include=FALSE}
+### male clustering
+# Distance Calculation 
+gower_dist_male <- daisy(df_male[,-1],metric = "gower",type = list(logratio = 3))
+# gower_dist
+summary(gower_dist_male)
+gower_mat_male <- as.matrix(gower_dist_male)
+
+# Output most similar pair
+df_male[which(gower_mat_male == min(gower_mat_male[gower_mat_male != min(gower_mat_male)]),
+                arr.ind = TRUE)[1, ], ]
+
+# Output most dissimilar pair
+df_male[which(gower_mat_male == max(gower_mat_male[gower_mat_male != max(gower_mat_male)]),
+                arr.ind = TRUE)[1, ], ]
+```
+
+
+Below is the clustering results. Cluster 1 for male users tend to have average body type and somtimes take drugs. For cluster 2, those male users have higher income.Most of them never take drugs and have athletic or fit body type. Male users in cluster 3 tend to have lower income compared to users in other two clusters. Most of them have average body type and never take drugs. 
+```{r,echo = FALSE}
+# Cluster Interpretation
+pam_fit_male <- pam(gower_dist_male, diss = TRUE, k = 3)
+pam_results_male <- df_male[,-1] %>%
+  mutate(cluster = pam_fit_male$clustering) %>%
+  group_by(cluster) %>%
+  do(the_summary = summary(.))
+
+pam_results_male$the_summary
+# df_male[pam_fit_male$medoids, ]
+```
+
+
+
+The analysis indicates that cluster 1 and 3 might have overlaps due to similar body type and other features. Similarly, cluster 2 and cluster 3 may have overlaps, so we used visualization to confirm whether the analysis is right or not. 
+
+And the below figure clearly shows that three clusters are seperated from each other, there are overlaps between different clusters, which follows the analysis. 
+```{r,echo = FALSE}
+# Visualization
+tsne_obj_male <- Rtsne(gower_dist_male, is_distance = TRUE)
+
+tsne_data_male <- tsne_obj_male$Y %>%
+  data.frame() %>%
+  setNames(c("X", "Y")) %>%
+  mutate(cluster = factor(pam_fit_male$clustering))
+
+ggplot(aes(x = X, y = Y), data = tsne_data_male) +
+  geom_point(aes(color = cluster))
+```
+
+
+Conculsion for cluster, ...........

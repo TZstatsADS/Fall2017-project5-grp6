@@ -31,22 +31,37 @@ quant_profiles_female <- select(quant_profiles_female0, age, height, income)
 
 ## BEGIN Optimize the number of clusters
 # How what value should the number of clusters take?
-kmeans_wssplot <- function(input, num_clusters, seed=15){
+kmeans_wssplot <- function(input, num_clusters, seed=15, label){
   wss <- (nrow(input)-1)*sum(apply(input,2,var))
   for (i in 2:num_clusters){
     set.seed(seed)
     wss[i] <- sum(kmeans(input, centers=i)$withinss)}
-  plot(1:num_clusters, wss, type="b", xlab="Number of Clusters",
-       ylab="Within Groups Sum of Squares")}
+  plot(1:num_clusters, wss, type="b", xlab=paste("Number of Clusters for", label),
+       ylab="Within Groups Sum of Squares")
+  text(1:num_clusters, wss,label=wss,col='blue')
+  }
 
-kmeans_wssplot(quant_profiles_male, num_clusters=6)
-kmeans_wssplot(quant_profiles_female, num_clusters=6)
+kmeans_wssplot(quant_profiles_male, num_clusters=6, label = "Male")
+kmeans_wssplot(quant_profiles_female, num_clusters=6, label = "Female")
+#
+kmeans_wssplot2 <- function(input, num_clusters, seed=15, label){
+  wss <- (nrow(input)-1)*sum(apply(input,2,var))
+  for (i in 2:num_clusters){
+    set.seed(seed)
+    wss[i] <- sum(kmeans(input, centers=i)$withinss)}
+  plot(2:num_clusters, wss[-1], type="b", xlab=paste("Number of Clusters for", label),
+       ylab="Within Groups Sum of Squares")
+  text(2:num_clusters, c(wss[-1]+1e11),label=wss,col='blue')
+  }
+
+kmeans_wssplot2(quant_profiles_male, num_clusters=8, label = "Male")
+kmeans_wssplot2(quant_profiles_female, num_clusters=8, label = "Female")
 
 #
 library("factoextra")
-fviz_nbclust(quant_profiles_male, kmeans, method = "gap_stat") # Gap_statistics: larger the better; compares the total intra-cluster variation for different values of k with their expected values under null;further away from random distribution; Choose the smallest value of k such that the gap stat is within one stan
+fviz_nbclust(quant_profiles_male, kmeans, method = "gap_stat") # Gap_statistics: larger the better; compares the total intra-cluster variation for different values of k with their expected values under null;further away from random distribution; Choose the smallest value of k such that the gap stat is within one standard deviation of the next gap stat
 
-
+fviz_nbclust(quant_profiles_female, kmeans, method = "gap_stat")
 ##
 ## END Optimize the number of clusters
 
@@ -61,7 +76,8 @@ fviz_nbclust(quant_profiles_male, kmeans, method = "gap_stat") # Gap_statistics:
 # Fit K-Means with number of clusters on male and female respectively
 quant_male_k_means_fit3 <- kmeans(quant_profiles_male, 3)
 quant_male_k_means_fit4 <- kmeans(quant_profiles_male, 4)
-quant_female_k_means_fit4 <- kmeans(quant_profiles_female, 4)
+quant_female_k_means_fit3 <- kmeans(quant_profiles_female, 3)
+quant_female_k_means_fit2 <- kmeans(quant_profiles_female, 2)
 
 # Visualize the clustering after apply PCA
 clusplot(quant_profiles_male, quant_male_k_means_fit3$cluster, main='2D representation of the Cluster solution',
@@ -73,7 +89,29 @@ clusplot(quant_profiles_male, quant_male_k_means_fit4$cluster, main='2D represen
          labels=2, lines=0)
 ```
 
-# Agglomerative Hierarchical Cluster: starts with each individual observation as a cluster; then the two closest points as a new cluster
+## Cluster Sizes
+```{r}
+quant_male_k_means_fit3$size
+quant_female_k_means_fit3$size
+quant_female_k_means_fit2$size
+```
+
+## Mean for each variable within each cluster
+```{r}
+aggregate(quant_profiles_male, by = list(cluster=quant_male_k_means_fit3$cluster), mean)
+
+aggregate(quant_profiles_female, by = list(cluster=quant_female_k_means_fit3$cluster), mean)
+
+```
+
+## Median for each variable within each cluster
+```{r}
+aggregate(quant_profiles_male, by = list(cluster=quant_male_k_means_fit3$cluster), median)
+
+aggregate(quant_profiles_female, by = list(cluster=quant_female_k_means_fit3$cluster), median)
+```
+
+# Agglomerative Hierarchical Clustering: starts with each individual observation as a cluster; then the two closest points as a new cluster
 ```{r}
 
 m_medians = apply(quant_profiles_male,2,median)
@@ -88,5 +126,10 @@ m_groups_4 = cutree(quant_m_hclust,4) #showing cluster membership for 3 cluster 
 table(m_groups_4)
 
 #table(wine[,1],groups) #Confusion matrix
+```
+
+```{r}
+
+
 ```
 
