@@ -5,3 +5,5 @@
 - Joaquim Lyrio: exploratory data analysis on Speed Dating data set, data processing
 
 - Henrique Saboya: exploratory data analysis on Speed Dating data set, data cleaning, and linear models on matching rates
+
+- Xinhu Wang: exploratory data analysis on OkCupid Data set and Speed Dating data set, data cleaning, and data visualization.
