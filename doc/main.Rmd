@@ -22,13 +22,14 @@ library(MASS)
 library(fmsb)
 library(knitr)
 library(memisc)
+library(fmsb)
 
 data(profiles)
 ```
 ###In this project, we conduct extensive exploratory analysis using various visualization tools, clustering, and regression models on datasets obtained from Kaggle and OkCupid, one of the most widely used dating apps to derive meaningful insights into online dating. We hope to help everyone in the fray to increase their opportunity of finding the one. 
 
 ####First of all, we will explore the two data sets and get a general sense of the dating scene.
-As for the data cleaning part, we removed some outliers from each category, so that they won't affect the result of our cluster model.
+
 First, let's take a look at the distribution of height, which is converted into inches (1 foot = 12 inches). We can see the distribution is widely spreaded and some of them do not make sense in terms of heights. Therefore, we removed those rows that have extreme heights from our data.
 ```{r}
 profiles_new <- profiles %>% na.omit()
@@ -42,8 +43,8 @@ profiles.sub1 <- filter(profiles_new, !height %in% outliers.h)
 profiles.sub2 <- filter(profiles.sub1, !is.na(age), !is.na(sex), age > 18, age < 80)
 ```
 
-Look at the sex and age distributions.
-Surprisingly there are a lot more male using the dating app. Most of the users are in their mid-20s.
+Let's start from some general information of the users.
+### Sex and age distributions
 ```{r}
 sex_dist <- ggplot(profiles.sub2, aes(x= sex, fill = sex)) + 
     geom_bar(position = "dodge", stat = "count")  +
@@ -63,7 +64,9 @@ age_dist <- ggplot(sex.age, aes(x= age, y = n_age, color = sex)) +
 print(age_dist)
 ```
 
-Income difference by sex.
+Surprisingly there are a lot more male using the dating app. Most of the users are in their mid-20s.
+
+### Income difference by sex.
 We also want to know the users' income information. 
 ```{r}
 profiles.sub2$income %>% unique %>% sort
@@ -75,10 +78,10 @@ p1 <- ggplot(profiles.sub2, aes(x = sex)) +
 print(ggplotly(p1))
 ```
 
-#### Womens’ incomes are lower than men’s. A larger percentage of women, for example, report an income of $20,000 than do men. Men also have higher representation incomes above $100,000.
+Womens’ incomes are lower than men’s. A larger percentage of women, for example, report an income of 20,000. Men also have a much higher representation incomes above 100,000.
 
 
-Religions difference.
+### Religions difference
 The religion data is a little complicated, as it includes both the affiliation and how serious they are about their belif. For simplicity, we will only focus on the affiliation attributes in this case.
 ```{r}
 sample(unique(profiles.sub2$religion), 4)
@@ -93,8 +96,7 @@ print(ggplotly(p2))
 
 A large proportion of men users reporting “atheism” and “agnosticism” as their affiliation, and women users have similar distribution with a slightly lower percentage.
 
-Drinking habit.
-More than half of the okcupid users are socially drinkers, and men users have a slightly greater tendency to drink “often” than women users.
+### Drinking habit
 ```{r}
 p3 <- ggplot(profiles.sub3, aes(x = sex)) +
   geom_bar(aes(y = ..count../sum(..count..), fill = drinks)) + 
@@ -103,11 +105,11 @@ p3 <- ggplot(profiles.sub3, aes(x = sex)) +
 print(ggplotly(p3))
 ```
 
+More than half of the okcupid users are socially drinkers, and men users have a slightly greater tendency to drink “often” than women users.
 
-Second dataset: Speed date data from Kaggle.com
+### Speed Dating Data
+We used the speed dating data to get a sense of the relationship between different attributes and number of matches.
 ```{r}
-#install.packages("fmsb")
-library(fmsb)
 speed <- read.csv("~/Desktop/ADS/fall2017-project5-proj5-group6/data/speed-dating-experiment/Speed Dating Data.csv", na.strings = c("NA", ""), stringsAsFactors = F)
 speed.sub <- speed %>% select(-id, -idg, -condtn, -round, -position, -positin1, -order, -partner, -undergra)
 #change "income", "tuition" and "mn_sat" type as numerical
@@ -116,7 +118,7 @@ speed.sub$tuition <- as.numeric(gsub(",", "", speed.sub$tuition))
 speed.sub$mn_sat  <- as.numeric(gsub(",", "", speed.sub$mn_sat))
 ```
 
-field and career distribution by sex
+### Field and Career distribution by gender
 ```{r}
 # Create study field codes
 fields.cd <- c(
@@ -189,8 +191,11 @@ p5 <- ggplot(careers, aes(x = career_c, y = my.n, fill = as.factor(gender))) +
 print(p5)
 ```
 
+For OkCupid users, the majority proportion of the male users are major in Business/Finance field, and working in banking or other academic careers.
 
-age difference & no. of match
+
+### Does age really matter? Relation between Age difference & no. of matches.
+Here we draw the barplot of number of matches by number of years of age difference of the participants. Clearly, age does matter to most people! Most of the matches were made when the two participants have 0 to 3 years of age difference.
 ```{r}
 # Group df by age and age_0
 age.dist <- speed.sub %>%
