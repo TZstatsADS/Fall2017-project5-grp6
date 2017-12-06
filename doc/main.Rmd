@@ -28,9 +28,193 @@ data(profiles)
 ###In this project, we conduct extensive exploratory analysis using various visualization tools, clustering, and regression models on datasets obtained from Kaggle and OkCupid, one of the most widely used dating apps to derive meaningful insights into online dating. We hope to help everyone in the fray to increase their opportunity of finding the one. 
 
 ####First of all, we will explore the two data sets and get a general sense of the dating scene.
+As for the data cleaning part, we removed some outliers from each category, so that they won't affect the result of our cluster model.
+First, let's take a look at the distribution of height, which is converted into inches (1 foot = 12 inches). We can see the distribution is widely spreaded and some of them do not make sense in terms of heights. Therefore, we removed those rows that have extreme heights from our data.
 ```{r}
+profiles_new <- profiles %>% na.omit()
+# summary(profiles_new$height)
+boxplot(profiles_new$height, main = 'Distribution of heights', ylab = 'Height in inches')
+# Remove the "unreasonable" values (outliers)
+outliers.h <- boxplot.stats(profiles_new$height)$out
+profiles.sub1 <- filter(profiles_new, !height %in% outliers.h)
 
+# Remove extreme and NA ages
+profiles.sub2 <- filter(profiles.sub1, !is.na(age), !is.na(sex), age > 18, age < 80)
 ```
+
+Look at the sex and age distributions.
+Surprisingly there are a lot more male using the dating app. Most of the users are in their mid-20s.
+```{r}
+sex_dist <- ggplot(profiles.sub2, aes(x= sex, fill = sex)) + 
+    geom_bar(position = "dodge", stat = "count")  +
+    ggtitle("sex distribution") +
+    ylab("count") + 
+    xlab("age")
+print(sex_dist)
+
+sex.age <- group_by(profiles.sub2[, c("sex", "age")], sex, age) %>% summarize(n_age = n())
+
+age_dist <- ggplot(sex.age, aes(x= age, y = n_age, color = sex)) + 
+    geom_line(size = 1.5)  +
+    ggtitle("age distribution by sex") +
+    ylab("count") + 
+    xlab("age") +
+    theme(legend.position="right")
+print(age_dist)
+```
+
+Income difference by sex.
+We also want to know the users' income information. 
+```{r}
+profiles.sub2$income %>% unique %>% sort
+
+p1 <- ggplot(profiles.sub2, aes(x = sex)) +
+  geom_bar(aes(y = ..count../sum(..count..), fill = as.factor(income))) + 
+  theme(legend.position = "right") +
+  ylab("Percent") + ggtitle("Income distribution by sex")
+print(ggplotly(p1))
+```
+
+#### Womens’ incomes are lower than men’s. A larger percentage of women, for example, report an income of $20,000 than do men. Men also have higher representation incomes above $100,000.
+
+
+Religions difference.
+The religion data is a little complicated, as it includes both the affiliation and how serious they are about their belif. For simplicity, we will only focus on the affiliation attributes in this case.
+```{r}
+sample(unique(profiles.sub2$religion), 4)
+profiles.sub3 <- profiles.sub2 %>% mutate(religious_affil = gsub(" [A-z ]*", "", religion))
+profiles.sub3 <- profiles.sub3 %>% filter(religious_affil != "other")
+p2 <- ggplot(profiles.sub3, aes(x = sex)) +
+  geom_bar(aes(y = ..count../sum(..count..), fill = religious_affil)) + 
+  theme(legend.position = "right") +
+  ylab("Percent") + ggtitle("Religion distribution by sex")
+print(ggplotly(p2))
+```
+
+A large proportion of men users reporting “atheism” and “agnosticism” as their affiliation, and women users have similar distribution with a slightly lower percentage.
+
+Drinking habit.
+More than half of the okcupid users are socially drinkers, and men users have a slightly greater tendency to drink “often” than women users.
+```{r}
+p3 <- ggplot(profiles.sub3, aes(x = sex)) +
+  geom_bar(aes(y = ..count../sum(..count..), fill = drinks)) + 
+  theme(legend.position = "right") +
+  ylab("Percent") + ggtitle("Drinks distribution by sex")
+print(ggplotly(p3))
+```
+
+
+Second dataset: Speed date data from Kaggle.com
+```{r}
+#install.packages("fmsb")
+library(fmsb)
+speed <- read.csv("~/Desktop/ADS/fall2017-project5-proj5-group6/data/speed-dating-experiment/Speed Dating Data.csv", na.strings = c("NA", ""), stringsAsFactors = F)
+speed.sub <- speed %>% select(-id, -idg, -condtn, -round, -position, -positin1, -order, -partner, -undergra)
+#change "income", "tuition" and "mn_sat" type as numerical
+speed.sub$income  <- as.numeric(gsub(",", "", speed.sub$income))
+speed.sub$tuition <- as.numeric(gsub(",", "", speed.sub$tuition))
+speed.sub$mn_sat  <- as.numeric(gsub(",", "", speed.sub$mn_sat))
+```
+
+field and career distribution by sex
+```{r}
+# Create study field codes
+fields.cd <- c(
+  "Law",
+  "Math",
+  "Social Science, Psychologist" ,
+  "Medical Science, Pharmaceuticals, and Bio Tech",
+  "Engineering",
+  "English/Creative Writing/ Journalism",
+  "History/Religion/Philosophy",
+  "Business/Econ/Finance",
+  "Education, Academia",
+  "Biological Sciences/Chemistry/Physics",
+  "Social Work" ,
+  "Undergrad/undecided" ,
+  "Political Science/International Affairs" ,
+  "Film",
+  "Fine Arts/Arts Administration",
+  "Languages",
+  "Architecture",
+  "Other"
+)
+
+# Create career codes
+career.cd <- c(
+  "Lawyer",
+  "Academic/Research", 
+  "Psychologist", 
+  "Doctor/Medicine",
+  "Engineer", 
+  "Creative Arts/Entertainment",
+  "BankingBusiness/CEO/Admin",
+  "Real Estate",
+  "International/Humanitarian Affairs",
+  "Undecided" ,
+  "Social Work",
+  "Speech Pathology",
+  "Politics",
+  "Pro sports/Athletics",
+  "Other",
+  "Journalism",
+  "Architecture"
+)
+
+# Find number of men/women on each study field
+fields <- speed.sub[!is.na(speed.sub$field_cd),] %>%
+  group_by(gender, field_cd) %>%
+  summarise(my.n = n())
+
+# Find number of men/women on each career
+careers <- speed.sub[!is.na(speed.sub$career_c),] %>%
+  group_by(gender, career_c) %>%
+  summarise(my.n = n())
+
+# Plot study fields repartition
+p4 <- ggplot(fields, aes(x = field_cd, y = my.n, fill = as.factor(gender))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_discrete(name = "Gender") +
+  xlab("Field") + ylab("Count") + ggtitle("Fields Distribution by sex") +
+  scale_x_continuous(labels = fields.cd, breaks = 1:18) +
+  coord_flip()
+print(p4)
+
+p5 <- ggplot(careers, aes(x = career_c, y = my.n, fill = as.factor(gender))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_discrete(name = "Gender") +
+  xlab("Career") + ylab("Count") + ggtitle("Careers Distribution by sex") +
+  scale_x_continuous(labels = career.cd, breaks = 1:17) +
+  coord_flip()
+print(p5)
+```
+
+
+age difference & no. of match
+```{r}
+# Group df by age and age_0
+age.dist <- speed.sub %>%
+  group_by(age, age_o) %>%
+  summarise(n.people = n(), n.matches = sum(match)) %>%
+  filter(!is.na(age) & !is.na(age_o))
+
+# Filter with age difference > 5 years, and with more than 5 matches
+age.diff <- age.dist %>%
+  filter(age - age_o >= 0) %>%
+  mutate(n.years = age - age_o) %>%
+  group_by(n.years) %>%
+  summarise(n.matches = sum(n.matches)) %>%
+  arrange(n.years)
+
+p6 <- ggplot(age.diff[age.diff$n.years < 20,], aes(x = n.years, y = n.matches)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  xlab("Number of years of age difference") + 
+  ylab("Number of matches") + 
+  ggtitle("Distribution of Number of matches (by age difference)")
+print(p6)
+```
+
+
 ####Next, we explore the different categories within the online dating population with K-Means Clustering, so that people can identify themselves with a category and understand what kind of competition they are facing. 
 
 ####We performed K-Means on three of the continuous variables: age, height, and income, and did it on male and female respectively. 
