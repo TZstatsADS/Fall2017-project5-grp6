@@ -26,11 +26,11 @@ library(fmsb)
 
 data(profiles)
 ```
-###In this project, we conduct extensive exploratory analysis using various visualization tools, clustering, and regression models on datasets obtained from Kaggle and OkCupid, one of the most widely used dating apps to derive meaningful insights into online dating. We hope to help everyone in the fray to increase their opportunity of finding the one. 
+####In this project, we conduct extensive exploratory analysis using various visualization tools, clustering, and regression models on datasets obtained from Kaggle and OkCupid, one of the most widely used dating apps to derive meaningful insights into online dating. We hope to help everyone in the fray to increase their opportunity of finding the one. 
 
 ####First of all, we will explore the two data sets and get a general sense of the dating scene.
 
-First, let's take a look at the distribution of height, which is converted into inches (1 foot = 12 inches). We can see the distribution is widely spreaded and some of them do not make sense in terms of heights. Therefore, we removed those rows that have extreme heights from our data.
+####First, let's take a look at the distribution of height, which is converted into inches (1 foot = 12 inches). We can see the distribution is widely spreaded and some of them do not make sense in terms of heights. Therefore, we removed those rows that have extreme heights from our data.
 ```{r}
 profiles_new <- profiles %>% na.omit()
 # summary(profiles_new$height)
@@ -43,8 +43,8 @@ profiles.sub1 <- filter(profiles_new, !height %in% outliers.h)
 profiles.sub2 <- filter(profiles.sub1, !is.na(age), !is.na(sex), age > 18, age < 80)
 ```
 
-Let's start from some general information of the users.
-### Sex and age distributions
+####Let's start from some general information of the users.
+#### Sex and age distributions
 ```{r}
 sex_dist <- ggplot(profiles.sub2, aes(x= sex, fill = sex)) + 
     geom_bar(position = "dodge", stat = "count")  +
@@ -64,10 +64,10 @@ age_dist <- ggplot(sex.age, aes(x= age, y = n_age, color = sex)) +
 print(age_dist)
 ```
 
-Surprisingly there are a lot more male using the dating app. Most of the users are in their mid-20s.
+####Surprisingly there are a lot more male using the dating app. Most of the users are in their mid-20s.
 
-### Income difference by sex.
-We also want to know the users' income information. 
+#### Income difference by sex.
+####We also want to know the users' income information. 
 ```{r}
 profiles.sub2$income %>% unique %>% sort
 p1 <- ggplot(profiles.sub2, aes(sex)) +
@@ -76,11 +76,11 @@ p1 <- ggplot(profiles.sub2, aes(sex)) +
 p1
 ```
 
-Womens’ incomes are lower than men’s. A larger percentage of women, for example, report an income of 20,000. Men also have a much higher representation incomes above 100,000.
+#### Women's incomes are lower than men's. A larger percentage of women, for example, report an income of 20,000. Men also have a much higher representation incomes above 100,000.
 
 
-### Religions difference
-The religion data is a little complicated, as it includes both the affiliation and how serious they are about their belif. For simplicity, we will only focus on the affiliation attributes in this case.
+#### Religions difference
+#### The religion data is a little complicated, as it includes both the affiliation and how serious they are about their belif. For simplicity, we will only focus on the affiliation attributes in this case.
 ```{r}
 sample(unique(profiles.sub2$religion), 4)
 profiles.sub3 <- profiles.sub2 %>% mutate(religious_affil = gsub(" [A-z ]*", "", religion))
@@ -91,9 +91,9 @@ p2 <- ggplot(profiles.sub3, aes(x = sex)) +
 p2
 ```
 
-A large proportion of men users reporting “atheism” and “agnosticism” as their affiliation, and women users have similar distribution with a slightly lower percentage.
+####A large proportion of men users reporting to be atheists and agnostics as their affiliation, and women users have similar distribution with a slightly lower percentage.
 
-### Drinking habit
+#### Drinking habit
 ```{r}
 p3 <- ggplot(profiles.sub3, aes(x = sex)) +
   geom_bar(aes(fill = drinks)) + 
@@ -101,12 +101,12 @@ p3 <- ggplot(profiles.sub3, aes(x = sex)) +
 p3
 ```
 
-More than half of the okcupid users are socially drinkers, and men users have a slightly greater tendency to drink “often” than women users.
+#### More than half of the okcupid users are socially drinkers, and men users have a slightly greater tendency to drink more often than women users.
 
-### Speed Dating Data
-We used the speed dating data to get a sense of the relationship between different attributes and number of matches.
+#### Speed Dating Data
+####We used the speed dating data to get a sense of the relationship between different attributes and number of matches.
 ```{r}
-speed <- read.csv("~/Downloads/fall2017-project5-proj5-group6-master/data/speed-dating-experiment/Speed Dating Data.csv", na.strings = c("NA", ""), stringsAsFactors = F)
+speed <- read.csv("../data/speed-dating-experiment/Speed Dating Data.csv", na.strings = c("NA", ""), stringsAsFactors = F)
 # speed.sub <- speed %>% select(-id, -idg, -condtn, -round, -position, -positin1, -order, -partner, -undergra)
 #change "income", "tuition" and "mn_sat" type as numerical
 speed$income  <- as.numeric(gsub(",", "", speed$income))
@@ -114,7 +114,7 @@ speed$tuition <- as.numeric(gsub(",", "", speed$tuition))
 speed$mn_sat  <- as.numeric(gsub(",", "", speed$mn_sat))
 ```
 
-### Field and Career distribution by gender
+#### Field and Career distribution by gender
 ```{r}
 # Create study field codes
 fields.cd <- c(
@@ -187,11 +187,11 @@ p5 <- ggplot(careers, aes(x = career_c, y = my.n, fill = as.factor(gender))) +
 print(p5)
 ```
 
-For OkCupid users, the majority proportion of the male users are major in Business/Finance field, and working in banking or other academic careers.
+####For OkCupid users, the majority proportion of the male users are major in Business/Finance field, and working in banking or other academic careers.
 
 
-### Does age really matter? Relation between Age difference & no. of matches.
-Here we draw the barplot of number of matches by number of years of age difference of the participants. Clearly, age does matter to most people! Most of the matches were made when the two participants have 0 to 3 years of age difference.
+#### Does age really matter? Relation between Age difference & no. of matches.
+####Here we draw the barplot of number of matches by number of years of age difference of the participants. Clearly, age does matter to most people! Most of the matches were made when the two participants have 0 to 3 years of age difference.
 ```{r}
 # Group df by age and age_0
 age.dist <- speed %>%
@@ -269,10 +269,13 @@ kmeans_wssplot2 <- function(input, num_clusters, seed=15, label){
 kmeans_wssplot2(quant_profiles_male, num_clusters=8, label = "Male")
 kmeans_wssplot2(quant_profiles_female, num_clusters=8, label = "Female")
 
-#
 ```
+
+
 #### Gap staistics: A more rigorous method to help us find the number of clusters.
+
 #### Since the larger the gap statistics the better and we should choose the smallest value of K such that the gap stat is within one standard deviation of the next gap stat, the output plot suggests K = 5. 
+
 ```{r, echo=FALSE}
 fviz_nbclust(quant_profiles_male, kmeans, method = "gap_stat") # Gap_statistics: larger the better; compares the total intra-cluster variation for different values of k with their expected values under null;further away from random distribution; Choose the smallest value of k such that the gap stat is within one standard deviation of the next gap stat
 
@@ -310,11 +313,11 @@ clusplot(quant_profiles_female, quant_female_k_means_fit3$cluster, main='Female 
 #### Cluster Sizes
 #### It seems that for both male and female, there are three distinct groups and one of them stand out. What are the characteristics of this outstanding group? We further investigate using within cluster statistics. 
 ```{r}
-quant_male_k_means_fit3$size
-quant_male_k_means_fit2$size
+quant_male_k_means_fit3$size #Male K=3
+quant_male_k_means_fit2$size #Male K=2
 
-quant_female_k_means_fit3$size
-quant_female_k_means_fit2$size
+quant_female_k_means_fit3$size # Female K=3
+quant_female_k_means_fit2$size #Female K=2
 ```
 
 #### Mean for each variable within each cluster for male and femal respectively
@@ -349,13 +352,13 @@ table(m_groups_4)
 #table(wine[,1],groups) #Confusion matrix
 ```
 
-........................
 
-With a broad understanding of clusters and dataset, we continued to add more categorical variables into clustering. Here, we used drinks habits, diet habits, drugs habits, and body type for people  
 
-Since we had both numeric and categorical variables in the model, we could not use k-means as clustering method. Instead, we used two-step clustering. 
+####With a broad understanding of clusters and dataset, we continued to add more categorical variables into clustering. Here, we used drinks habits, diet habits, drugs habits, and body type for people  
 
-Two-step clustering includes following major steps:
+####Since we had both numeric and categorical variables in the model, we could not use k-means as clustering method. Instead, we used two-step clustering. 
+
+####Two-step clustering includes following major steps:
 
 1. Calculating distance 
 
@@ -381,17 +384,17 @@ df_male <- filter(df, sex =="m")
 df_female <- filter(df, sex =="f")
 ```
 
-In the first step, we want to calculate distance to get measurement of similarity between observations. Since the data type is mixed data types, we could not work with Euclidean distance. Here we chose Gower distance.
+####In the first step, we want to calculate distance to get measurement of similarity between observations. Since the data type is mixed data types, we could not work with Euclidean distance. Here we chose Gower distance.
 
-Gower distance is a distance metric that scales the data between 0 and 1. And then, the distance matrix is calculated based on weights (e.g. average). The metrics used for each data type are described below:
+####Gower distance is a distance metric that scales the data between 0 and 1. And then, the distance matrix is calculated based on weights (e.g. average). The metrics used for each data type are described below:
 
 1. quantitative: range-normalized Manhattan distance
 
 2. categorical: variables of k categories are first converted into k binary columns and then the Dice coeffcient is used
 
-We calculated Gower distance with daisy function in R and checked out what is the most similar and dissimilar pair to do the sanity check. 
+####We calculated Gower distance with daisy function in R and checked out what is the most similar and dissimilar pair to do the sanity check. 
 
-Here is the most similar pair for female users:
+####Here is the most similar pair for female users:
 ```{r,echo = FALSE}
 ####### two-step clustering-----------------------------
 ### female clustering 
@@ -405,7 +408,7 @@ df_female[which(gower_mat == min(gower_mat[gower_mat != min(gower_mat)]),
                 arr.ind = TRUE)[1, ], ]
 ```
 
-Here is the most dissimilar pair for female users:
+####Here is the most dissimilar pair for female users:
 ```{r}
 # Output most dissimilar pair
 df_female[which(gower_mat == max(gower_mat[gower_mat != max(gower_mat)]),
@@ -413,7 +416,7 @@ df_female[which(gower_mat == max(gower_mat[gower_mat != max(gower_mat)]),
 ```
 
 
-In the second step, we selected partitioning around medics (PAM).  PAM is similar with k-means, but the cluster center for PAM are restricted as the observations and could handle a custom distance matrix ( i.e. Gower distance). The detail pf the algorithm is following:
+####In the second step, we selected partitioning around medoids (PAM).  PAM is similar with k-means, but the cluster center for PAM are restricted as the observations and could handle a custom distance matrix ( i.e. Gower distance). The detail pf the algorithm is following:
 
 1. Choose k random entities to become the medoids
 
@@ -424,9 +427,9 @@ In the second step, we selected partitioning around medics (PAM).  PAM is simila
 4. If at least one medoid has changed, return to step 2. Otherwise, end the algorithm.
 
 
-After choosing PAM as clustering method, we used  silhouette width, an internal validation metric which is an aggregated measure of how similar an observation is to its own cluster compared its closest neighboring cluster. The width ranges from -1 to 1 and the higher the better. 
+####After choosing PAM as clustering method, we used  silhouette width, an internal validation metric which is an aggregated measure of how similar an observation is to its own cluster compared its closest neighboring cluster. The width ranges from -1 to 1 and the higher the better. 
 
-Below is the result for female users with different numbers of clusters. The figure suggests that number of cluster is 3. 
+####Below is the result for female users with different numbers of clusters. The figure suggests that number of cluster is 3. 
 ```{r,echo = FALSE}
 # Calculate silhouette width for many k using PAM
 sil_width <- c(NA)
@@ -441,9 +444,9 @@ plot(1:10, sil_width,xlab = "Number of clusters",ylab = "Silhouette Width")
 lines(1:10, sil_width)
 ```
 
-With number of cluster = 3, we calculated cluster and interpretate cluster results via summary and visualization. 
+####With number of cluster = 3, we calculated cluster and interpretate cluster results via summary and visualization. 
 
-Below is variable summary for each cluster of female users. We could conclude that female users in the cluster 1 tend to have curvy body type and never take drugs. Female users in the cluster 2 tend to little bit aged and have average body type, higer income and never take drugs. Female users in the cluster 3 somttime take drugs.
+####Below is variable summary for each cluster of female users. We could conclude that female users in the cluster 1 tend to have curvy body type and never take drugs. Female users in the cluster 2 tend to little bit aged and have average body type, higer income and never take drugs. Female users in the cluster 3 sometimes take drugs.
 ```{r,echo = FALSE}
 # Cluster Interpretation
 pam_fit <- pam(gower_dist, diss = TRUE, k = 3)
@@ -456,10 +459,10 @@ pam_results$the_summary
 ```
 
 
-Based on the results analysis, it seems like cluster 1 and 2 are more simliar and cluster 3 is more seperate from other two groups. Will the visualization result follow the analysis? Here, we used t-distributed stochastic neighborhood embedding, or t-SNE, to visualize many variables in a lower dimensional space.This method is a dimension reduction technique that tries to preserve local structure so as to make clusters visible in a 2D or 3D visualization.
+####Based on the results analysis, it seems like cluster 1 and 2 are more simliar and cluster 3 is more seperate from other two groups. Will the visualization result follow the analysis? Here, we used t-distributed stochastic neighborhood embedding, or t-SNE, to visualize many variables in a lower dimensional space.This method is a dimension reduction technique that tries to preserve local structure so as to make clusters visible in a 2D or 3D visualization.
 
 
-The below is the visualization result. The visualization follows the analysis. We could seer the cluster 3 is little special from other two clusters. 
+####The below is the visualization result. The visualization follows the analysis. We could seer the cluster 3 is little special from other two clusters. 
 ```{r,echo = FALSE}
 # Visualization
 tsne_obj <- Rtsne(gower_dist, is_distance = TRUE)
@@ -474,7 +477,7 @@ ggplot(aes(x = X, y = Y), data = tsne_data) +
 ```
 
 
-We went through the cluster for female users above. We also used the same method to cluster male users with 3 clusters. 
+####We went through the cluster for female users above. We also used the same method to cluster male users with 3 clusters. 
 ```{r,echo = FALSE, include=FALSE}
 ### male clustering
 # Distance Calculation 
@@ -493,7 +496,7 @@ df_male[which(gower_mat_male == max(gower_mat_male[gower_mat_male != max(gower_m
 ```
 
 
-Below is the clustering results. Cluster 1 for male users tend to have average body type and sometimes take drugs. For cluster 2, those male users have higher income. Most of them never take drugs and have athletic or fit body type. Male users in cluster 3 tend to have lower income compared to users in other two clusters. Most of them have average body type and never take drugs. 
+####Below is the clustering results. Cluster 1 for male users tend to have average body type and sometimes take drugs. For cluster 2, those male users have higher income. Most of them never take drugs and have athletic or fit body type. Male users in cluster 3 tend to have lower income compared to users in other two clusters. Most of them have average body type and never take drugs. 
 ```{r,echo = FALSE}
 # Cluster Interpretation
 pam_fit_male <- pam(gower_dist_male, diss = TRUE, k = 3)
@@ -506,9 +509,9 @@ pam_results_male$the_summary
 # df_male[pam_fit_male$medoids, ]
 ```
 
-The analysis indicates that cluster 1 and 3 might have overlaps due to similar body type and other features. Similarly, cluster 2 and cluster 3 may have overlaps, so we used visualization to confirm whether the analysis is right or not. 
+####The analysis indicates that cluster 1 and 3 might have overlaps due to similar body type and other features. Similarly, cluster 2 and cluster 3 may have overlaps, so we used visualization to confirm whether the analysis is right or not. 
 
-And the below figure clearly shows that three clusters are seperated from each other, there are overlaps between different clusters, which follows the analysis. 
+####And the below figure clearly shows that three clusters are seperated from each other, there are overlaps between different clusters, which follows the analysis. 
 ```{r,echo = FALSE}
 # Visualization
 tsne_obj_male <- Rtsne(gower_dist_male, is_distance = TRUE)
@@ -523,25 +526,22 @@ ggplot(aes(x = X, y = Y), data = tsne_data_male) +
 ```
 
 
-Conculsion for cluster, ...........
-
-
 #### Now, we decided to analyze, in parallel, the Speed Dating data set, to understand who are those that get matches more frequently. What are their characteristics? What do they have in common?
 
 #### Due to several differences in both dataset, crossing the data would not be possible, so we only focused on providing as much information as possible for the user to understand both the user clusters, their characteristics and what he/she should have in mind if he wants to increase his matches (on online dating).
 
-Read data set:
+####Read data set:
 ```{r}
 raw.data.speed.dating <- read.csv("../data/speed-dating-experiment/Speed Dating Data.csv")
 ```
 
-The full raw data set has the following dimensions:
+####The full raw data set has the following dimensions:
 
 ```{r}
 dim(raw.data.speed.dating)
 ```
 
-Below we will filter the data set, selecting only the variables we considered important for this study. Also, we break it into 2 data sets, one for analysing the individual who participated on the speed dating event, and the other data set for analyzing paired matches.
+####Below we will filter the data set, selecting only the variables we considered important for this study. Also, we break it into 2 data sets, one for analysing the individual who participated on the speed dating event, and the other data set for analyzing paired matches.
 
 ```{r}
 #For looking at matches
@@ -563,9 +563,9 @@ speed.dating.individual <- unique(speed.dating.individual)
 rm(select.fields, select.fields2)
 ```
 
-To have matching information on the user level, we decided to calculate matching rates for the individuals. The matching rate is simply the percentage of how many matches did the person have for the total indivuals he/she met that day.
+####To have matching information on the user level, we decided to calculate matching rates for the individuals. The matching rate is simply the percentage of how many matches did the person have for the total indivuals he/she met that day.
 
-Below we calculate the matching rates and merge it to the individual data set.
+####Below we calculate the matching rates and merge it to the individual data set.
 
 ```{r}
 matching.rates <- raw.data.speed.dating[, c("match", "iid")]
@@ -576,7 +576,7 @@ speed.dating.individual <- merge(speed.dating.individual, matching.rates, by = "
 
 ### Preliminary Analysis:
 
-One initial question that might arise is: who goes more often on dates, men or women? Let's see.
+####One initial question that might arise is: who goes more often on dates, men or women? Let's see.
 ```{r}
 
 df_n_dates <- speed.dating.individual[,c("gender","date")]
@@ -585,9 +585,9 @@ df_n_dates[ which( df_n_dates$gender == 1 ), ]$gender <- "male"
 
 # 0 - female
 # 1 - male
-ggplot(df_n_dates,aes(x = date)) + 
-    geom_density(data=subset(df_n_dates,gender == 'female'),fill = "red", alpha = 0.2) +
-    geom_density(data=subset(df_n_dates,gender == 'male'),fill = "blue", alpha = 0.2)
+dd <- stack( df_n_dates )
+ggplot(df_n_dates,aes(x = date, fill = gender)) + 
+    geom_density(alpha=0.2)
 
 # plot( density( df_n_dates[ which( df_n_dates$gender == "female" ), ]$date ), col = "black",
 #       xlab = "date" , lwd = 2)
@@ -602,9 +602,9 @@ mean( df_n_dates[ which( df_n_dates$gender == 'female' & !is.na(df_n_dates$date)
 mean( df_n_dates[ which( df_n_dates$gender == 'male' & !is.na(df_n_dates$date) ), ]$date)
 
 ```
-As we can see, apparently women go more often on dates than men.
+####As we can see, apparently women go more often on dates than men.
 
-Now, let's see how the age of the participants is distributed on this data set.
+####Now, let's see how the age of the participants is distributed on this data set.
 ```{r}
 #For every variable 1 = yes and 0 = no
 #For every rate, 10 is important and 0 is not important
@@ -614,13 +614,13 @@ boxplot(speed.dating.individual$age, main = "Age of Participantes", ylab = "Age"
 summary(speed.dating.individual$age)
 ```
 
-We see that most participants were on their mid-20's for this dataset. Let's check the overall matching rate.
+####We see that most participants were on their mid-20's for this dataset. Let's check the overall matching rate.
 ```{r}
 #Matching percentage
 paste("The overall matching rate in the speed dating event was: ", round(sum(speed.dating$match == 1)/nrow(speed.dating) * 100, 2), " %", sep = "")
 ```
 
-Let's see the behavior of the interest correlations.
+####Let's see the behavior of the interest correlations.
 ```{r}
 #Box plot on matches by ratings of interest correlations
 par(mfrow=c(1,2))
@@ -630,9 +630,9 @@ boxplot(speed.dating$int_corr, data = speed.dating, main = "Correlation on Ratin
 summary(speed.dating$int_corr)
 ```
 
-Looking at the interest ratings correlations above, we can see that having a high correlation did not seem to be relevant for having matches. It was also interesting to have such high correlation values (mean aprox 0.2), as someone could expect these to be overall around 0.
+####Looking at the interest ratings correlations above, we can see that having a high correlation did not seem to be relevant for having matches. It was also interesting to have such high correlation values (mean aprox 0.2), as someone could expect these to be overall around 0.
 
-We have also the data on whether people had the same race (yes or no) and their ratings on same race preference and same religion preference, being 1 not important for the other person to have the same race and 10 very important that the other person is of the same race.
+####We have also the data on whether people had the same race (yes or no) and their ratings on same race preference and same religion preference, being 1 not important for the other person to have the same race and 10 very important that the other person is of the same race.
 
 ```{r}
 #Race
@@ -646,9 +646,9 @@ ftable(speed.dating$match2, speed.dating$samerace2)
 
 ```
 
-If we look at the matching rates, having the same race or not does seem to have little impact on the rate of matches. We get 17.06% matching rate if individuals have the same race and 16.08%% matching rate if they have different races.
+####If we look at the matching rates, having the same race or not does seem to have little impact on the rate of matches. We get 17.06% matching rate if individuals have the same race and 16.08%% matching rate if they have different races.
 
-Now looking at the importance rates for partner having the same religion and same race:
+####Now looking at the importance rates for partner having the same religion and same race:
 
 ```{r}
 #How important it is to be with someone of the same religion or race
@@ -662,9 +662,9 @@ summary(speed.dating.individual$imprace)
 summary(speed.dating.individual$imprelig)
 ```
 
-We can see that for most people, having the same race or religion is a bit important.
+####We can see that for most people, having the same race or religion is a bit important.
 
-To continue our investigation, we are also analyzing which attributes are the participating individuals looking for:
+####To continue our investigation, we are also analyzing which attributes are the participating individuals looking for:
 
 ```{r}
 #What people are looking for in his partner
@@ -689,9 +689,9 @@ radarchart(as.data.frame(radar), title = "What men are looking for")
 
 ```
 
-As we can see, men seem to care more if women are attractive or not, when it comes to looking for a partner. Women tend to value more intelligence in their partners.
+####As we can see, men seem to care more if women are attractive or not, when it comes to looking for a partner. Women tend to value more intelligence in their partners.
 
-Now, let's analyse how relevant is the income level of an individual to the amount of matches he/she receives. Is there any correlation between a person's income and his percentage of matches?
+####Now, let's analyse how relevant is the income level of an individual to the amount of matches he/she receives. Is there any correlation between a person's income and his percentage of matches?
 ```{r}
 
 plot( x = speed.dating.individual$match, y = speed.dating.individual$income,
@@ -701,9 +701,9 @@ plot( x = speed.dating.individual$match, y = speed.dating.individual$income,
 cor( x = speed.dating.individual$match, y = as.numeric(speed.dating.individual$income) )
 
 ```
-Apparently, it doesn't appear to exist a relation between these two factors.
+####Apparently, it doesn't appear to exist a relation between these two factors.
 
-Additionally, we can observe the matching rates distribution for the individuals below:
+####Additionally, we can observe the matching rates distribution for the individuals below:
 ```{r}
 plot(density(speed.dating.individual$match), main = "matches density")
 
@@ -713,7 +713,7 @@ mean(speed.dating.individual$match)
 sd(speed.dating.individual$match)
 ```
 
-Now, one of our goals is to understand which factors drive the matching rates for these individuals. For that, we decided to fit some linear models, not necessarily to predict the matching rates, but to narrow down which variables should we be looking at if we want to increase our matching rates:
+####Now, one of our goals is to understand which factors drive the matching rates for these individuals. For that, we decided to fit some linear models, not necessarily to predict the matching rates, but to narrow down which variables should we be looking at if we want to increase our matching rates:
 
 ```{r}
 par(mfrow=c(1,1))
@@ -729,9 +729,9 @@ summary(linear.model)
 sum(linear.model$residuals^2)
 ```
 
-From our fit, we can observe the main drivers of the matching rates are: Importance of Race, Age, How often the individual goes on dates, How often the individual "go out", interest in arts and interest in clubbing.
+####From our fit, we can observe the main drivers of the matching rates are: Importance of Race, Age, How often the individual goes on dates, How often the individual "go out", interest in arts and interest in clubbing.
 
-Let's fit another model removing the variables that seem not to be important:
+####Let's fit another model removing the variables that seem not to be important:
 
 ```{r}
 #Second Model----------------------------------------------------------------------
@@ -744,11 +744,11 @@ summary(linear.model)
 sum(linear.model$residuals^2)
 ```
 
-The variable "interest in arts" seems to be the less important one, and the most important drivers seem to be whether the person often goes on dates and whether the person likes to "go out".
+####The variable "interest in arts" seems to be the less important one, and the most important drivers seem to be whether the person often goes on dates and whether the person likes to "go out".
 
-Even though the linear model may not be the best fit for our data, we can at least see what are the characteristics of people who get most matches.
+####Even though the linear model may not be the best fit for our data, we can at least see what are the characteristics of people who get most matches.
 
-Out of curiosity, we decided to fit a third model without the intercept:
+####Out of curiosity, we decided to fit a third model without the intercept:
 
 ```{r}
 #Third Model----------------------------------------------------------------------
@@ -760,9 +760,9 @@ summary(linear.model)
 sum(linear.model$residuals^2)
 ```
 
-After several trials and errors, we decided that the best variables for the third model are: Age, "go out", art and clubbing.
+####After several trials and errors, we decided that the best variables for the third model are: Age, "go out", art and clubbing.
 
-However, as mentioned, the linear model is not the best fit for our matching rates. We can see that by taking a quick look at the residuals:
+####However, as mentioned, the linear model is not the best fit for our matching rates. We can see that by taking a quick look at the residuals:
 
 ```{r}
 linear.stdres = rstandard(linear.model)
@@ -773,7 +773,7 @@ qqnorm(linear.stdres,
 qqline(linear.stdres)
 ```
 
-Interesting: the 'date' variable was important on the second model, but not on the third... are they highly correlated?
+####Interesting: the 'date' variable was important on the second model, but not on the third... are they highly correlated? Or were people lying?
 
 ```{r}
 calculate.correlation <- speed.dating.individual[ , c("date", "go_out")]
@@ -782,23 +782,14 @@ calculate.correlation <- na.omit(calculate.correlation)
 round(cor(calculate.correlation$date, calculate.correlation$go_out),2)
 ```
 
-They are fairly correlated.
+####They are fairly correlated, but it could be that people lie about that...
 
-### remove this LDA part?
 
-We also decided to understand whether we can predict if 2 people will match. For that we ran a LDA model on some of the data. However, we were not able to get any significant result.
+####From the output above, we can see our model was no capable of identifying who will have a match.
 
-```{r}
-lda.model <- lda(match ~ ., data = speed.dating[,-c(8,9)], CV = T)
+### Conclusion:
 
-table(lda.model$class)
-```
-
-From the output above, we can see our model was no capable of identifying who will have a match.
-
-## Conclusion:
-
-### After testing these linear models, our conclusion was that: if you want to increase your matching rates, you better start to like going out more often, clubbing and arts. Also, have more practice with dates. Which makes total sense, since people with these characteristics are generally more extrovert, less shy and tend to feel more confortable among people they don't know very well.
+#### After testing these linear models, our conclusion was that: if you want to increase your matching rates, you better start to like going out more often, clubbing and arts. Also, have more practice with dates. Which makes total sense, since people with these characteristics are generally more extrovert, less shy and tend to feel more confortable among people they don't know very well.
 
 Obs: We have tried boxcox transformations and taking the log out of the match rates, however we had similar results, and the residuals still did not present to be great fits. Some kind of generalized linear model could be a next step.
 
