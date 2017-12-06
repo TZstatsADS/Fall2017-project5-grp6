@@ -2,15 +2,16 @@
 
 Term: Fall 2017
 
-+ Team #
-+ Projec title: Lorem ipsum dolor sit amet
++ Group 6
++ Projec title: Decode Online Dating
 + Team members
-	+ team member 1
-	+ team member 2
-	+ team member 3
-	+ team member 4
-	+ team member 5
-+ Project summary: Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+	+ Henrique Saboya
+	+ Joaquim Lyrio
+	+ Nina Shao
+	+ Xinhu
+	+ Yiran Li
+	
++ Project summary: In this project, we conduct extensive exploratory analysis using various visualization tools, clustering, and regression models on datasets obtained from Kaggle and OkCupid, one of the most widely used dating apps to derive meaningful insights into online dating. We hope to help everyone in the fray to increase their opportunity of finding the one.
 	
 **Contribution statement**: ([default](doc/a_note_on_contributions.md)) All team members contributed equally in all stages of this project. All team members approve our work presented in this GitHub repository including this contributions statement. 
 
